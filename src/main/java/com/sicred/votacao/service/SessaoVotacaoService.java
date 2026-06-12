@@ -4,19 +4,24 @@ import com.sicred.votacao.dto.OpenVotingSessionRequest;
 import com.sicred.votacao.dto.VotingSessionResponse;
 import com.sicred.votacao.entity.Pauta;
 import com.sicred.votacao.entity.SessaoVotacao;
+import com.sicred.votacao.exception.PautaNotFoundException;
+import com.sicred.votacao.exception.SessaoJaExisteException;
+import com.sicred.votacao.exception.SessaoEncerradaException;
 import com.sicred.votacao.repository.PautaRepository;
 import com.sicred.votacao.repository.SessaoVotacaoRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
 public class SessaoVotacaoService {
+
+    private static final Logger log = LoggerFactory.getLogger(SessaoVotacaoService.class);
 
     private final SessaoVotacaoRepository sessaoVotacaoRepository;
     private final PautaRepository pautaRepository;
@@ -25,17 +30,17 @@ public class SessaoVotacaoService {
     public VotingSessionResponse abrirSessao(Long pautaId, OpenVotingSessionRequest request) {
         // verificar pauta existe
         Pauta pauta = pautaRepository.findById(pautaId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pauta não encontrada"));
+                .orElseThrow(() -> new PautaNotFoundException("Pauta não encontrada"));
 
         // verificar se já existe sessão
         if (sessaoVotacaoRepository.existsByPautaId(pautaId)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Sessão já existe para esta pauta");
+            throw new SessaoJaExisteException("Sessão já existe para esta pauta");
         }
 
         int duracao = 1; // default 1 minuto
         if (request != null && request.getDuracaoMinutos() != null) {
             if (request.getDuracaoMinutos() <= 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "duracaoMinutos must be greater than zero");
+                throw new IllegalArgumentException("duracaoMinutos must be greater than zero");
             }
             duracao = request.getDuracaoMinutos();
         }
@@ -50,6 +55,8 @@ public class SessaoVotacaoService {
                 .build();
 
         SessaoVotacao saved = sessaoVotacaoRepository.save(sessao);
+
+        log.info("Sessão criada para pauta {} com id {}", pautaId, saved.getId());
 
         return VotingSessionResponse.builder()
                 .id(saved.getId())
