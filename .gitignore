@@ -1,0 +1,16 @@
+.idea/
+target/
+*.iml
+*.log
+*.jar
+*.war
+*.class
+# macOS
+.DS_Store
+# VS Code
+.vscode/
+# Maven
+.settings/
+.mvn/
+# Node
+node_modules/
