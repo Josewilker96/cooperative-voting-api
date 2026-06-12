@@ -9,6 +9,8 @@ import com.sicred.votacao.exception.PautaNotFoundException;
 import com.sicred.votacao.exception.SessaoEncerradaException;
 import com.sicred.votacao.exception.SessaoNotFoundException;
 import com.sicred.votacao.exception.VotoDuplicadoException;
+import com.sicred.votacao.integration.VoterEligibilityClient;
+import com.sicred.votacao.integration.dto.UserInfoResponse;
 import com.sicred.votacao.repository.PautaRepository;
 import com.sicred.votacao.repository.SessaoVotacaoRepository;
 import com.sicred.votacao.repository.VotoRepository;
@@ -31,9 +33,15 @@ public class VotoService {
     private final VotoRepository votoRepository;
     private final PautaRepository pautaRepository;
     private final SessaoVotacaoRepository sessaoVotacaoRepository;
+    private final VoterEligibilityClient voterEligibilityClient;
 
     @Transactional
     public VoteResponse registrarVoto(VoteRequest request) {
+        // 0. validar CPF externo
+        log.info("Iniciando validação de CPF para associado={}", request.getIdentificadorAssociado());
+        UserInfoResponse userInfo = voterEligibilityClient.checkCpf(request.getIdentificadorAssociado());
+        log.info("Resultado validação CPF associado={}: {}", request.getIdentificadorAssociado(), userInfo.getStatus());
+
         // 1. validar pauta existe
         Pauta pauta = pautaRepository.findById(request.getPautaId())
                 .orElseThrow(() -> new PautaNotFoundException("Pauta não encontrada"));

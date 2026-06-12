@@ -21,3 +21,7 @@ springdoc:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
+
+integration:
+  user-info:
+    base-url: https://user-info.herokuapp.com
