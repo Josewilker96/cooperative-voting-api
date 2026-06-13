@@ -12,7 +12,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class CreatePautaRequest {
 
-    @NotBlank(message = "titulo is required")
+    @NotBlank(message = "titulo não pode ser vazio")
     private String titulo;
-
 }
