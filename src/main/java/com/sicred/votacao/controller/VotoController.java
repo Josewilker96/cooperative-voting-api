@@ -1,36 +1,34 @@
 package com.sicred.votacao.controller;
 
 import com.sicred.votacao.dto.VoteRequest;
-import com.sicred.votacao.dto.VoteResponse;
+import com.sicred.votacao.dto.formulario.TelaFormulario;
 import com.sicred.votacao.service.VotoService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
-
 @RestController
-@RequestMapping("/api/v1/votos")
+@RequestMapping("/api/v1/pautas/{pautaId}/votos")
 @RequiredArgsConstructor
 public class VotoController {
 
     private final VotoService votoService;
 
-    @Operation(summary = "Registra voto de associado")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Voto registrado com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos / sessão encerrada"),
-            @ApiResponse(responseCode = "404", description = "Pauta ou sessão não encontrada"),
-            @ApiResponse(responseCode = "409", description = "Associado já votou")
-    })
+    @Operation(summary = "Valida voto e retorna tela de confirmação ou erro")
     @PostMapping
-    public ResponseEntity<VoteResponse> registrarVoto(@Valid @RequestBody VoteRequest request) {
-        VoteResponse response = votoService.registrarVoto(request);
-        URI location = URI.create(String.format("/api/v1/votos/%d", response.getId()));
-        return ResponseEntity.created(location).body(response);
+    public ResponseEntity<TelaFormulario> votar(@PathVariable Long pautaId,
+                                                @Valid @RequestBody VoteRequest request) {
+        TelaFormulario tela = votoService.processarVoto(pautaId, request);
+        return ResponseEntity.ok(tela);
+    }
+
+    @Operation(summary = "Registra voto após confirmação")
+    @PostMapping("/registrar")
+    public ResponseEntity<Void> registrarVoto(@PathVariable Long pautaId,
+                                              @Valid @RequestBody VoteRequest request) {
+        votoService.registrarVoto(pautaId, request);
+        return ResponseEntity.status(201).build();
     }
 }

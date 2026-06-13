@@ -9,6 +9,7 @@ import com.sicred.votacao.repository.PautaRepository;
 import com.sicred.votacao.repository.SessaoVotacaoRepository;
 import com.sicred.votacao.repository.VotoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -23,26 +24,39 @@ public class VotingResultService {
     private final SessaoVotacaoRepository sessaoVotacaoRepository;
     private final VotoRepository votoRepository;
 
+    @Cacheable(value = "resultados", key = "#pautaId")
     public VotingResultResponse apurarResultado(Long pautaId) {
-        // 1. pauta existe
+
         Pauta pauta = pautaRepository.findById(pautaId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pauta não encontrada"));
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Pauta não encontrada"));
 
-        // 2. sessão existe
         SessaoVotacao sessao = sessaoVotacaoRepository.findByPautaId(pautaId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sessão não encontrada para a pauta"));
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Sessão não encontrada para a pauta"));
 
-        // 3. valida se sessão já fechou
         if (sessao.getDataFechamento().isAfter(LocalDateTime.now())) {
             throw new SessaoAindaAbertaException("Sessão ainda está aberta");
         }
 
-        // 4. contabilizar votos utilizando contagens eficientes
-        long totalSim = votoRepository.countByPautaIdAndVoto(pautaId, TipoVoto.SIM);
-        long totalNao = votoRepository.countByPautaIdAndVoto(pautaId, TipoVoto.NAO);
-        long total = votoRepository.countByPautaId(pautaId);
+        long totalSim = votoRepository.countByPautaIdAndVoto(
+                pautaId,
+                TipoVoto.SIM
+        );
+
+        long totalNao = votoRepository.countByPautaIdAndVoto(
+                pautaId,
+                TipoVoto.NAO
+        );
+
+        long total = totalSim + totalNao;
 
         String resultado;
+
         if (totalSim > totalNao) {
             resultado = "APROVADA";
         } else if (totalNao > totalSim) {

@@ -1,18 +1,98 @@
+#spring:
+#  datasource:
+#    url: jdbc:postgresql://localhost:5432/votacao
+#    username: postgres
+#    password: postgres
+##    driver-class-name: org.postgresql.Driver
+#  jpa:
+#    hibernate:
+#      ddl-auto: none
+#    properties:
+#      hibernate:
+#        format_sql: true
+#  flyway:
+#    enabled: true
+#    locations: classpath:db/migration
+#
+#server:
+#  port: 8081
+#
+#springdoc:
+#  api-docs:
+#    path: /v3/api-docs
+#  swagger-ui:
+#    path: /swagger-ui.html
+#
+##integration:
+##  user-info:
+##    base-url: https://user-info.herokuapp.com // API ESTA FORA
+#
+#integration:
+#  user-info:
+#    base-url: http://localhost:8082
+
+#spring:
+#  datasource:
+#    url: jdbc:postgresql://localhost:5432/votacao
+#    username: postgres
+#    password: postgres
+#  jpa:
+#    hibernate:
+#      ddl-auto: none
+#    properties:
+#      hibernate:
+#        format_sql: true
+#  flyway:
+#    enabled: true
+#    locations: classpath:db/migration
+#  data:
+#    redis:
+#      host: localhost
+#      port: 6379
+#  cache:
+#    type: redis
+#    redis:
+#      time-to-live: 10000 # 10s - sessão cacheada some em 10s
+#
+#server:
+#  port: 8081
+#
+#springdoc:
+#  api-docs:
+#    path: /v3/api-docs
+#  swagger-ui:
+#    path: /swagger-ui.html
+#
+#integration:
+#  user-info:
+#    base-url: http://localhost:8082
+
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/votacao
     username: postgres
     password: postgres
-#    driver-class-name: org.postgresql.Driver
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: none
     properties:
       hibernate:
         format_sql: true
+    show-sql: false # ADD: evita poluir log nos 500k votos
   flyway:
     enabled: true
     locations: classpath:db/migration
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms # ADD: evita travar se Redis cair
+  cache:
+    type: redis
+    redis:
+      time-to-live: 10s # MUDOU: mais legível que 10000
+      cache-null-values: false # ADD: não cacheia null
 
 server:
   port: 8081
@@ -25,4 +105,9 @@ springdoc:
 
 integration:
   user-info:
-    base-url: https://user-info.herokuapp.com
+    base-url: http://localhost:8082
+
+logging:
+  level:
+    com.sicred.votacao: INFO # ADD: vê os logs de cache hit/miss
+    org.hibernate.SQL: WARN # ADD: desliga SQL no log

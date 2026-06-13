@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class OpenVotingSessionRequest {
 
-    @Positive(message = "duracaoMinutos must be positive")
+    @Positive(message = "Duração deve ser maior que zero")
     private Integer duracaoMinutos;
 
 }

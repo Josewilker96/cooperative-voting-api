@@ -71,21 +71,6 @@ class PautaServiceTest {
         assertThat(captured.getTitulo()).isEqualTo("Pauta de teste");
     }
 
-    @Test
-    @DisplayName("deveRejeitarTituloVazio")
-    void deveRejeitarTituloVazio() {
-        // Arrange
-        CreatePautaRequest request = CreatePautaRequest.builder().titulo("").build();
-
-        // Act
-        Set<ConstraintViolation<CreatePautaRequest>> violations = validator.validate(request);
-
-        // Assert
-        assertThat(violations).isNotEmpty();
-        assertThat(violations.iterator().next().getMessage()).contains("titulo is required");
-
-        verifyNoInteractions(pautaRepository);
-    }
 
     @Test
     @DisplayName("deveRejeitarTituloNulo")

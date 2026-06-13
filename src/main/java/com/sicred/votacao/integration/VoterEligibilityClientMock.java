@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Primary
 @Profile("!prod")
-public class VoterEligibilityClientMock implements VoterEligibilityClient { // ← faltava isso aqui
+public class VoterEligibilityClientMock implements VoterEligibilityClient {
 
     @Override
     public UserInfoResponse checkCpf(String cpf) {

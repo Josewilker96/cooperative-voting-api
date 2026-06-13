@@ -1,14 +1,11 @@
 package com.sicred.votacao.exception;
 
-import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
-import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -68,12 +65,25 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.warn("Sessao encerrada: {}", ex.getMessage());
         ApiError error = ApiError.builder()
                 .timestamp(LocalDateTime.now())
-                .status(HttpStatus.BAD_REQUEST.value())
-                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+                .status(HttpStatus.CONFLICT.value())
+                .error(HttpStatus.CONFLICT.getReasonPhrase())
                 .message(ex.getMessage())
                 .path(request.getDescription(false).replace("uri=", ""))
                 .build();
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(SessaoAindaAbertaException.class)
+    public ResponseEntity<ApiError> handleSessaoAindaAberta(SessaoAindaAbertaException ex, WebRequest request) {
+        log.warn("Sessao ainda aberta: {}", ex.getMessage());
+        ApiError error = ApiError.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.CONFLICT.value())
+                .error(HttpStatus.CONFLICT.getReasonPhrase())
+                .message(ex.getMessage())
+                .path(request.getDescription(false).replace("uri=", ""))
+                .build();
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(VotoDuplicadoException.class)
@@ -107,7 +117,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.warn("Associado não habilitado: {}", ex.getMessage());
         ApiError error = ApiError.builder()
                 .timestamp(LocalDateTime.now())
-                .status(HttpStatus.FORBIDDEN.value())
+                .status(HttpStatus.FORBIDDEN.value()) // MUDOU: 401 -> 403
                 .error(HttpStatus.FORBIDDEN.getReasonPhrase())
                 .message(ex.getMessage())
                 .path(request.getDescription(false).replace("uri=", ""))
@@ -142,13 +152,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.warn("Validation failed: {}", errors);
         ApiError error = ApiError.builder()
                 .timestamp(LocalDateTime.now())
-                .status(org.springframework.http.HttpStatus.BAD_REQUEST.value())
-                .error(org.springframework.http.HttpStatus.BAD_REQUEST.getReasonPhrase())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
                 .message("Dados inválidos")
                 .errors(errors)
                 .path(request.getDescription(false).replace("uri=", ""))
                 .build();
-        return new ResponseEntity<>(error, org.springframework.http.HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)
@@ -158,17 +168,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .error(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase())
-                .message("Unexpected error")
+                .message("Erro interno do servidor")
                 .path(request.getDescription(false).replace("uri=", ""))
                 .build();
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    @ExceptionHandler(SessaoAindaAbertaException.class)
-    public ProblemDetail handleSessaoAindaAberta(SessaoAindaAbertaException ex) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
-        problem.setTitle("Bad Request");
-        problem.setProperty("timestamp", LocalDateTime.now());
-        return problem;
     }
 }
